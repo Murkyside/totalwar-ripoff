@@ -1,12 +1,13 @@
 import math
 from guizero import App, Drawing
 
+# temporary drawing things =====================
 w = 600
 h = 600
 
 app = App(width=w, height=h)
 drawing = Drawing(app, width=w, height=h)
-
+# temporary drawing things =====================
 
 def trans(x): # Used for drawing items in nice places on the screen
     return ((x + 20) * 5) 
@@ -14,34 +15,22 @@ def trans(x): # Used for drawing items in nice places on the screen
 class Unit():
   def __init__(self, kind, number, x, y, theta,morale,length):
     self.type = kind  # what type of soldier
-    self.number = number  # how many men are still in the unit
-    self.theta = theta  #this is the rotation of the unit
+    self.number = number  # amount of men
+    self.theta = theta  #rotation of the unit
     self.x = x
     self.y = y
     self.morale = morale
-
-    #maths bullshit DO NOT TOUCH
     self.length = length 
+    self.setupUnit()
+    self.updateRot()
+
+  def setupUnit(self):
+    #maths bullshit DO NOT TOUCH
     self.height = 200/self.length #area
     self.alpha = math.atan(self.length/self.height)
     self.beta = math.atan(self.height/self.length)
     self.diagonal = ((self.height**2)/4+(self.length**2)/4)**(1/2)
-    self.a1 = [
-        self.x + self.diagonal**(1 / 2) * math.cos(self.theta - self.alpha),
-        self.y + self.diagonal**(1 / 2) * math.sin(self.theta - self.alpha)
-    ]
-    self.a2 = [
-        self.x + self.diagonal**(1 / 2) * math.cos(self.theta + self.alpha),
-        self.y + self.diagonal**(1 / 2) * math.sin(self.theta + self.alpha)
-    ]
-    self.b1 = [
-        self.x + self.diagonal**(1 / 2) * math.cos(self.theta + self.alpha+2*self.beta),
-        self.y + self.diagonal**(1 / 2) * math.sin(self.theta + self.alpha+2*self.beta)
-    ]
-    self.b2 = [
-        self.x + self.diagonal**(1 / 2) * math.cos(self.theta + 3*self.alpha+2*self.beta),
-        self.y + self.diagonal**(1 / 2) * math.sin(self.theta + 3*self.alpha+2*self.beta)
-    ]
+    
 
   def updateRot(self):
     self.a1 = [
@@ -61,15 +50,21 @@ class Unit():
         self.y + self.diagonal**(1 / 2) * math.sin(self.theta + 3*self.alpha+2*self.beta)
     ]
 
-  def rotateCW(self): #clockwise
-    self.theta = self.theta + math.pi / 6
-    self.updateRot()
+  def rotateCW(self,beta): #clockwise
+    desire = self.theta + beta
+    while self.theta < desire:
+      self.theta = self.theta + math.pi / 12
+      self.updateRot()
+      print(self.theta)
 
-  def rotateCCW(self):#counterclockwise
-    self.theta = self.theta - math.pi / 6
-    self.updateRot()
+  def rotateCCW(self,beta):#counterclockwise
+    desire = self.theta - beta
+    while self.theta > desire:
+      self.theta = self.theta - math.pi / 12
+      self.updateRot()
 
   def translate(self, i, j):
+    print(i)
     self.a1[0] = self.a1[0] + i
     self.a1[1] = self.a1[1] + j
     self.a2[0] = self.a2[0] + i
@@ -80,6 +75,13 @@ class Unit():
     self.b2[1] = self.b2[1] + j
     self.x = self.x + i
     self.y = self.y + j
+
+  def moveTo(self,a,b):
+    gamma = (self.y-b[1])/((self.x**2+self.y**2)**(1/2)*(b[0]**2+b[1]**2)**(1/2))
+    self.rotateCW(gamma)
+    self.translate(a[0],a[1])
+    delta = (a[1]-b[1])/((a[0]**2+a[1]**2)**(1/2)*(b[0]**2+b[1]**2)**(1/2))
+    self.rotateCW(delta)
 
 class Player(Unit): #extends unit
   def drawUnit(self):
@@ -95,9 +97,10 @@ def main():
   units = []
   units.append(Player('Infantry', 1000, 10, 10, 0,100,25))
   units.append(Enemy('Infantry', 1000, 0, 0, 0,100,15))
-  units[0].rotateCW()
-  units[1].rotateCCW()
+  units[0].rotateCW(math.pi/6)
+  units[1].rotateCCW(math.pi/3)
   units[0].translate(50,10)
+  units[0].moveTo([1,2],[200,30])
   for i in range(len(units)):
     units[i].drawUnit()
     print(units[i].length,units[i].height)
