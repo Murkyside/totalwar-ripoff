@@ -9,7 +9,3 @@ def rotate(points,theta): # takes the array points in the form [a1x,a1y,a2x,a2y,
     points[i] = (points[i] - x) * math.cos(theta) - (points[i+1] - y) * math.sin(theta) + x
     points[i+1] = (points[i] - x) * math.cos(theta) + (points[i+1] - y) * math.sin(theta) + y
   return(points) # returns points in the same way it received points
-
-
-  
-
