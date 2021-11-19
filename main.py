@@ -1,4 +1,5 @@
 import math
+import time
 from guizero import App, Drawing
 
 # temporary drawing things =====================
@@ -31,7 +32,6 @@ class Unit():
     self.beta = math.atan(self.height/self.length)
     self.diagonal = ((self.height**2)/4+(self.length**2)/4)**(1/2)
     
-
   def updateRot(self):
     self.a1 = [
         self.x + self.diagonal**(1 / 2) * math.cos(self.theta - self.alpha),
@@ -54,27 +54,31 @@ class Unit():
     desire = self.theta + beta
     while self.theta < desire:
       self.theta = self.theta + math.pi / 12
-      self.updateRot()
-      print(self.theta)
+    self.updateRot()
 
   def rotateCCW(self,beta):#counterclockwise
     desire = self.theta - beta
     while self.theta > desire:
       self.theta = self.theta - math.pi / 12
-      self.updateRot()
+    self.updateRot()
 
   def translate(self, i, j):
-    print(i)
-    self.a1[0] = self.a1[0] + i
-    self.a1[1] = self.a1[1] + j
-    self.a2[0] = self.a2[0] + i
-    self.a2[1] = self.a2[1] + j
-    self.b1[0] = self.b1[0] + i
-    self.b1[1] = self.b1[1] + j
-    self.b2[0] = self.b2[0] + i
-    self.b2[1] = self.b2[1] + j
-    self.x = self.x + i
-    self.y = self.y + j
+    incX = i-self.x
+    incY = j-self.y
+    magnitude = (incX**2+incY**2)**(1/2)
+    incX = incX/magnitude
+    incY = incY/magnitude
+    while self.x < i and self.y < j:
+      self.a1[0] = self.a1[0] + incX
+      self.a1[1] = self.a1[1] + incY
+      self.a2[0] = self.a2[0] + incX
+      self.a2[1] = self.a2[1] + incY
+      self.b1[0] = self.b1[0] + incX
+      self.b1[1] = self.b1[1] + incY
+      self.b2[0] = self.b2[0] + incX
+      self.b2[1] = self.b2[1] + incY
+      self.x = self.x + incX
+      self.y = self.y + incY
 
   def moveTo(self,a,b):
     gamma = (self.y-b[1])/((self.x**2+self.y**2)**(1/2)*(b[0]**2+b[1]**2)**(1/2))
@@ -86,27 +90,39 @@ class Unit():
 class Player(Unit): #extends unit
   def drawUnit(self):
     drawing.polygon(trans(self.a1[0]),trans(self.a1[1]),trans(self.a2[0]),trans(self.a2[1]),trans(self.b1[0]),trans(self.b1[1]),trans(self.b2[0]),trans(self.b2[1]), color="blue", outline=True, outline_color="black")
-  
 
 class Enemy(Unit): #extends unit
   def drawUnit(self):
     drawing.polygon(trans(self.a1[0]),trans(self.a1[1]),trans(self.a2[0]),trans(self.a2[1]),trans(self.b1[0]),trans(self.b1[1]),trans(self.b2[0]),trans(self.b2[1]), color="red", outline=True, outline_color="black")
 
 
-def main():
+def init():
   units = []
   units.append(Player('Infantry', 1000, 10, 10, 0,100,25))
   units.append(Enemy('Infantry', 1000, 0, 0, 0,100,15))
-  units[0].rotateCW(math.pi/6)
-  units[1].rotateCCW(math.pi/3)
-  units[0].translate(50,10)
-  units[0].moveTo([1,2],[200,30])
+  return(units)
+
+
+def update(units):
+  return()
+
+def render(units):
   for i in range(len(units)):
     units[i].drawUnit()
-    print(units[i].length,units[i].height)
-    print(units[i].alpha,units[i].beta)
-    print(units[i].a1,units[i].a2,units[i].b1,units[i].b2)
-  
 
+
+def main():
+  iterator = 0
+  units = init()
+  # game loop
+  while iterator<1000:
+    iterator+=1
+    timing = time.perf_counter()
+    timing2 = time.perf_counter()
+    while time.perf_counter()-timing2 < 0.1 :
+      update(units)
+    render(units)
+    if time.perf_counter() - timing < 1:
+      time.sleep(0.5)
 
 main()
