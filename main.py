@@ -24,7 +24,7 @@ class Unit():
     self.length = length 
     self.setupUnit()
     self.updateRot()
-
+    self.movement = [0,0]
 
   def setupUnit(self):
     #maths bullshit DO NOT TOUCH
@@ -56,15 +56,26 @@ class Unit():
 
   def rotateCW(self,beta): #clockwise
     desire = self.theta + beta
-    while self.theta < desire:
+    if math.fabs(self.theta-desire)<math.pi/12:
+      self.theta = desire
+      self.updateRot()
+      return(True)
+    else:
       self.theta = self.theta + math.pi / 12
-    self.updateRot()
-
+      self.updateRot()
+      return(False)
+    
   def rotateCCW(self,beta):#counterclockwise
     desire = self.theta - beta
-    while self.theta > desire:
+    if math.fabs(self.theta-desire)<math.pi/12:
+      self.theta = desire
+      self.updateRot()
+      return(True)
+    else:
       self.theta = self.theta - math.pi / 12
-    self.updateRot()
+      self.updateRot()
+      return(False)
+
 
   def translate(self, i, j):
     incX = i-self.x
@@ -72,24 +83,29 @@ class Unit():
     magnitude = (incX**2+incY**2)**(1/2)
     incX = incX/magnitude
     incY = incY/magnitude
-
-    self.a1[0] = self.a1[0] + incX
-    self.a1[1] = self.a1[1] + incY
-    self.a2[0] = self.a2[0] + incX
-    self.a2[1] = self.a2[1] + incY
-    self.b1[0] = self.b1[0] + incX
-    self.b1[1] = self.b1[1] + incY
-    self.b2[0] = self.b2[0] + incX
-    self.b2[1] = self.b2[1] + incY
-    self.x = self.x + incX
-    self.y = self.y + incY
+    if math.fabs(self.x-i)<incX:
+      self.x = i
+      return(True)
+    else:
+      self.a1[0] = self.a1[0] + incX
+      self.a1[1] = self.a1[1] + incY
+      self.a2[0] = self.a2[0] + incX
+      self.a2[1] = self.a2[1] + incY
+      self.b1[0] = self.b1[0] + incX
+      self.b1[1] = self.b1[1] + incY
+      self.b2[0] = self.b2[0] + incX
+      self.b2[1] = self.b2[1] + incY
+      self.x = self.x + incX
+      self.y = self.y + incY
+      return(False)
 
   def moveTo(self,a,b):
     gamma = (self.y-b[1])/((self.x**2+self.y**2)**(1/2)*(b[0]**2+b[1]**2)**(1/2))
-    self.rotateCW(gamma)
-    self.translate(a[0],a[1])
-    delta = (a[1]-b[1])/((a[0]**2+a[1]**2)**(1/2)*(b[0]**2+b[1]**2)**(1/2))
-    self.rotateCW(delta)
+    if self.rotateCW(gamma):
+      if self.translate(a[0],a[1]):
+        delta = (a[1]-b[1])/((a[0]**2+a[1]**2)**(1/2)*(b[0]**2+b[1]**2)**(1/2))
+        if self.rotateCW(delta):
+          self.movement = [0,0]
   
 class Player(Unit): #extends unit
   def drawUnit(self):
@@ -100,14 +116,18 @@ class Enemy(Unit): #extends unit
     drawing.polygon(trans(self.a1[0]),trans(self.a1[1]),trans(self.a2[0]),trans(self.a2[1]),trans(self.b1[0]),trans(self.b1[1]),trans(self.b2[0]),trans(self.b2[1]), color="red", outline=True, outline_color="black")
 
 
-
 def init():
   units = []
   units.append(Player('Infantry', 1000, 10, 10, 0,100,25))
   units.append(Enemy('Infantry', 1000, 0, 0, 0,100,15))
+  units[0].rotateCW(math.pi/2)
+  units[1].rotateCCW(math.pi/6)
   return(units)
 
 def update(units):
+  for i in range(len(units)):
+    if units[i].movement!=[0,0]:
+      units[i].moveTo(units[i].movement[0],units[i].movement[1])
   return()
 
 def render(units):
