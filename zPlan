@@ -1,0 +1,16 @@
+TODO:
+
+
+Make modes:
+
+when in deployment mode; click and drag and where you first click becomes the top left corner of the new unit and where you release becomes the top right corner of the unit
+
+when in battle mode; lick and drag and where you first click becomes the top left corner of the currently selected unit and where you release becomes the top right corner of the unit
+
+tMaths needs to be improved so that the functions work for any domain. remember to check speed after doing so
+
+A perlin noise generator needs to be made to create the battlefield
+
+modulation
+
+get shaun to make the gui already
