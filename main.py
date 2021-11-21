@@ -28,7 +28,7 @@ class Unit(): # some of these methods and variables should be protected/private 
     self.morale = morale
     self.length = length 
     self.setupUnit()
-    self.updateRot()
+    self.__updateRot()
     self.movement = [0,0]
     self.phase = 0
 
@@ -39,7 +39,7 @@ class Unit(): # some of these methods and variables should be protected/private 
     self.beta = math.atan(self.height/self.length) # angle between the tangent vector and the diagonal vector
     self.diagonal = ((self.height**2)/4+(self.length**2)/4)**(1/2) # length of the diagonal 
     
-  def updateRot(self): # when the unit is rotated each of the corners must be rotated. This function is fairly straightforward. Note however that although alpha is limited to {alpha | 0 < alpha < pi/2, alpha e R}, theta's domain is unlimited meaning that we must either reset theta to within the range 0 - 2pi or account for that if we choose to implement our own maths functions
+  def __updateRot(self): # when the unit is rotated each of the corners must be rotated. This function is fairly straightforward. Note however that although alpha is limited to {alpha | 0 < alpha < pi/2, alpha e R}, theta's domain is unlimited meaning that we must either reset theta to within the range 0 - 2pi or account for that if we choose to implement our own maths functions
     self.a1 = [
         self.x + self.diagonal**(1 / 2) * math.cos(self.theta - self.alpha),
         self.y + self.diagonal**(1 / 2) * math.sin(self.theta - self.alpha)
@@ -61,22 +61,22 @@ class Unit(): # some of these methods and variables should be protected/private 
     # if we are less than one increment away then snap to rotation
     if math.fabs(self.theta-beta)<math.pi/12:
       self.theta = beta
-      self.updateRot()# since we have rotated the unit the corners must be updated so that rendering and collision can be carried out corrrectly
+      self.__updateRot()# since we have rotated the unit the corners must be updated so that rendering and collision can be carried out corrrectly
       return(True) # tells moveTo whether unit has reached target or not
     else:
       self.theta = self.theta + math.pi / 12
-      self.updateRot()# since we have rotated the unit the corners must be updated so that rendering and collision can be carried out corrrectly
+      self.__updateRot()# since we have rotated the unit the corners must be updated so that rendering and collision can be carried out corrrectly
       return(False) # tells moveTo whether unit has reached target or not
     
   def rotateACW(self,beta):# anti-clockwise to beta
     # if we are less than one increment away then snap to rotation
     if math.fabs(self.theta-beta)<math.pi/12:
       self.theta = beta
-      self.updateRot()# since we have rotated the unit the corners must be updated so that rendering and collision can be carried out corrrectly
+      self.__updateRot()# since we have rotated the unit the corners must be updated so that rendering and collision can be carried out corrrectly
       return(True) # tells moveTo whether unit has reached target or not
     else:
       self.theta = self.theta - math.pi / 12
-      self.updateRot() # since we have rotated the unit the corners must be updated so that rendering and collision can be carried out corrrectly
+      self.__updateRot() # since we have rotated the unit the corners must be updated so that rendering and collision can be carried out corrrectly
       return(False) # tells moveTo whether unit has reached target or not
 
   def rotate(self,omega): # shortest rotation to omega
@@ -126,19 +126,19 @@ class Unit(): # some of these methods and variables should be protected/private 
       self.length = self.length + 1
       return(False) # tells moveTo whether unit has reached target size or not
 
-  def moveTo(self,a,b): # this is shit and it's too late for me to give a fuck
-    print('boo')
+  def moveTo(self,a,b): # this is shit please show me a better way
     if self.phase == 0:
-      if self.updateLength(((a[0]-b[0])**2+(a[1]-b[1])**2)**(1/2)):
+      print('desired length: ',((a[0]-b[0])**2+(a[1]-b[1])**2)**(1/2))
+      print('current length: ', self.length)
+      if self.updateLength(((a[0]-b[0])**2+(a[1]-b[1])**2)**(1/2)*3):
         self.phase = 1
       self.setupUnit()
-      self.updateRot()
+      self.__updateRot()
     elif self.phase == 1:
-      gamma = math.acos((self.y-b[1])/(((self.x-b[0])**2+(self.y-b[1])**2)**(1/2)))
+      print('difference: ', self.a2[0]-self.a1[0])
+      gamma = math.acos((self.y-((a[1]+b[1])/2))/(((self.x-((a[0]+b[0])/2))**2+(self.y-((a[1]+b[1])/2))**2)**(1/2)))-math.pi/2
       #gamma = math.acos(math.fabs((math.cos(self.theta)*(self.x-a[0])+math.sin(self.theta)*(self.y-b[0]))/((math.cos(self.theta)**2+math.sin(self.theta)**2)**(1.2)*((self.x-a[0])**2+(self.y-b[0])**2)**(1/2))))
-      print(gamma,self.theta)
       if self.rotate(gamma):
-        print('hello!')
         self.phase = 2
     elif self.phase == 2:
       if self.translate((a[0]+b[0])/2,(a[1]+b[1])/2):
@@ -153,7 +153,12 @@ class Player(Unit): #extends unit
   isSelected = None # the player can only control his own units
   def drawUnit(self): # I recon this is the best way of doing this feel free to disagree
     drawing.polygon(trans(self.a1[0]),trans(self.a1[1]),trans(self.a2[0]),trans(self.a2[1]),trans(self.b1[0]),trans(self.b1[1]),trans(self.b2[0]),trans(self.b2[1]), color="blue", outline=True, outline_color="black")
-    drawing.line(trans(self.x),trans(self.y),trans(self.x+10*math.sin(self.theta)),trans(self.y+10*math.cos(self.theta)),color = 'black',width = 1)
+    drawing.line(trans(self.x),trans(self.y),trans(self.x+10*math.cos(self.theta)),trans(self.y+10*math.sin(self.theta)),color = 'black',width = 1)
+    drawing.oval(trans(self.a1[0]),trans(self.a1[1]),trans(self.a1[0])+5,trans(self.a1[1])+5,color = 'green',outline=False)
+    drawing.oval(trans(self.a2[0]),trans(self.a2[1]),trans(self.a2[0])+5,trans(self.a2[1])+5,color = 'green',outline=False)
+    drawing.oval(trans(self.b1[0]),trans(self.b1[1]),trans(self.b1[0])+5,trans(self.b1[1])+5,color = 'red',outline=False)
+    drawing.oval(trans(self.b2[0]),trans(self.b2[1]),trans(self.b2[0])+5,trans(self.b2[1])++5,color = 'red',outline=False)
+    
 
 class Enemy(Unit): #extends unit
   def drawUnit(self): # I recon this is the best way of doing this feel free to disagree
@@ -239,8 +244,6 @@ def main():
   render(playerUnits,enemyUnits)
   #if time.perf_counter() - timing < 1:
     #time.sleep(0.5)
-  #print(iterator)
-  print(Player.isSelected)
 
 
 # This should probably be in it's own class or method or some shit but I dunno how these events work help ====================================
@@ -257,9 +260,13 @@ def compareTimer(event_data):
   global first
   now = time.perf_counter()
   if now - timeElapsed < 0.2:
+    drawing.oval(event_data.x-2,event_data.y-2,event_data.x+2,event_data.y+2,color = "red",outline=False)
     unitSelection(invTrans(event_data.x),invTrans(event_data.y))
   else:
     if Player.isSelected is not None:
+      drawing.oval(event_data.x-2,event_data.y-2,event_data.x+2,event_data.y+2,color = "green",outline=False)
+      print(trans(first[0]))
+      drawing.oval(trans(first[0])-2,trans(first[1])-2,trans(first[0])+2,trans(first[1])+2,color = "green",outline=False)
       playerUnits[Player.isSelected].movement = (first,[invTrans(event_data.x),invTrans(event_data.y)])
 
 drawing.when_left_button_pressed = startTimer
