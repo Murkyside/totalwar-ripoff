@@ -1,5 +1,11 @@
 TODO:
 
+fix the broken rotation
+tidy everything up
+implement collision between units:
+damage formula = 3+men/200+moral/2+10alt
+morale impact = damagetaken - damagedealt + 10
+
 
 Make modes:
 

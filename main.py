@@ -31,6 +31,9 @@ class Unit(): # some of these methods and variables should be protected/private 
     self.__updateRot()
     self.movement = [0,0]
     self.phase = 0
+    self.gamma = 0
+    self.targetLength = 0
+    self.delta = 0
 
   def setupUnit(self):
     # All these values can fluctuate upon the width of our unit changing and are used calculate the corners. Thus they must be recalculated when the unit is resized. 
@@ -80,6 +83,7 @@ class Unit(): # some of these methods and variables should be protected/private 
       return(False) # tells moveTo whether unit has reached target or not
 
   def rotate(self,omega): # shortest rotation to omega
+    print(omega,self.theta)
     if self.theta < omega:
       if self.rotateCW(omega):
         return True
@@ -116,36 +120,50 @@ class Unit(): # some of these methods and variables should be protected/private 
 
   def updateLength(self,newLength):
     #if we are less than one increment away then snap to size
-    if math.fabs(self.length - newLength) < 1:
+    if math.fabs(self.length - newLength) < 3:
       self.length = newLength
       return(True) # tells moveTo whether unit has reached target size or not
     elif self.length > newLength:
-      self.length = self.length - 1
+      self.length = self.length - 3
       return(False) # tells moveTo whether unit has reached target size or not
     else:
-      self.length = self.length + 1
+      self.length = self.length + 3
       return(False) # tells moveTo whether unit has reached target size or not
 
   def moveTo(self,a,b): # this is shit please show me a better way
     if self.phase == 0:
-      print('desired length: ',((a[0]-b[0])**2+(a[1]-b[1])**2)**(1/2))
-      print('current length: ', self.length)
-      if self.updateLength(((a[0]-b[0])**2+(a[1]-b[1])**2)**(1/2)*3):
-        self.phase = 1
+      self.targetLength = ((a[0]-b[0])**2+(a[1]-b[1])**2)**(1/2)*3
+      self.phase = 1
+    elif self.phase == 1:
+      if self.updateLength(self.targetLength):
+        self.phase = 2
       self.setupUnit()
       self.__updateRot()
-    elif self.phase == 1:
-      print('difference: ', self.a2[0]-self.a1[0])
-      gamma = math.acos((self.y-((a[1]+b[1])/2))/(((self.x-((a[0]+b[0])/2))**2+(self.y-((a[1]+b[1])/2))**2)**(1/2)))-math.pi/2
-      #gamma = math.acos(math.fabs((math.cos(self.theta)*(self.x-a[0])+math.sin(self.theta)*(self.y-b[0]))/((math.cos(self.theta)**2+math.sin(self.theta)**2)**(1.2)*((self.x-a[0])**2+(self.y-b[0])**2)**(1/2))))
-      if self.rotate(gamma):
-        self.phase = 2
     elif self.phase == 2:
+      #self.gamma = math.acos((self.y-((a[1]+b[1])/2))/(((self.x-((a[0]+b[0])/2))**2+(self.y-((a[1]+b[1])/2))**2)**(1/2)))-math.pi/2
+      if (self.y-((a[1]+b[1])/2))/(((self.x-((a[0]+b[0])/2))**2+(self.y-((a[1]+b[1])/2))**2)**(1/2)) < 0:
+        self.gamma = math.pi - (math.acos((self.y-((a[1]+b[1])/2))/(((self.x-((a[0]+b[0])/2))**2+(self.y-((a[1]+b[1])/2))**2)**(1/2)))-math.pi/2)
+      else:
+        self.gamma = math.acos((self.y-((a[1]+b[1])/2))/(((self.x-((a[0]+b[0])/2))**2+(self.y-((a[1]+b[1])/2))**2)**(1/2)))-math.pi/2
+      self.phase = 3
+    elif self.phase == 3:
+      if self.rotate(self.gamma):
+        self.phase = 4
+    elif self.phase == 4:
       if self.translate((a[0]+b[0])/2,(a[1]+b[1])/2):
-        self.phase = 3
+        self.phase = 5
+    elif self.phase == 5:
+      #self.delta = math.acos((a[1]-b[1])/(((a[0]-b[0])**2+(a[1]-b[1])**2)**(1/2)))-math.pi
+      if (a[1]-b[1])/(((a[0]-b[0])**2+(a[1]-b[1])**2)**(1/2)) < 0:
+        self.delta = math.pi - (math.acos((a[1]-b[1])/(((a[0]-b[0])**2+(a[1]-b[1])**2)**(1/2)))-math.pi)
+      else:
+        self.delta = math.acos((a[1]-b[1])/(((a[0]-b[0])**2+(a[1]-b[1])**2)**(1/2)))-math.pi
+
+      
+      self.phase = 6
+
     else:
-      delta = math.acos((a[1]-b[1])/(((a[0]-b[0])**2+(a[1]-b[1])**2)**(1/2)))-math.pi# I have no idea why i need to subtract pi, this doesn't work on paper no matter what I do but the computer is magic I guess
-      if self.rotate(delta):
+      if self.rotate(self.delta):
         self.movement = [0,0]
         self.phase = 0
 
@@ -153,6 +171,8 @@ class Player(Unit): #extends unit
   isSelected = None # the player can only control his own units
   def drawUnit(self): # I recon this is the best way of doing this feel free to disagree
     drawing.polygon(trans(self.a1[0]),trans(self.a1[1]),trans(self.a2[0]),trans(self.a2[1]),trans(self.b1[0]),trans(self.b1[1]),trans(self.b2[0]),trans(self.b2[1]), color="blue", outline=True, outline_color="black")
+    drawing.line(trans(self.a1[0]),trans(self.a1[1]),trans(self.b1[0]),trans(self.b1[1]),color = "black", width = 2)
+    drawing.line(trans(self.a2[0]),trans(self.a2[1]),trans(self.b2[0]),trans(self.b2[1]),color = "black", width = 2)
     drawing.line(trans(self.x),trans(self.y),trans(self.x+10*math.cos(self.theta)),trans(self.y+10*math.sin(self.theta)),color = 'black',width = 1)
     drawing.oval(trans(self.a1[0]),trans(self.a1[1]),trans(self.a1[0])+5,trans(self.a1[1])+5,color = 'green',outline=False)
     drawing.oval(trans(self.a2[0]),trans(self.a2[1]),trans(self.a2[0])+5,trans(self.a2[1])+5,color = 'green',outline=False)
@@ -163,6 +183,8 @@ class Player(Unit): #extends unit
 class Enemy(Unit): #extends unit
   def drawUnit(self): # I recon this is the best way of doing this feel free to disagree
     drawing.polygon(trans(self.a1[0]),trans(self.a1[1]),trans(self.a2[0]),trans(self.a2[1]),trans(self.b1[0]),trans(self.b1[1]),trans(self.b2[0]),trans(self.b2[1]), color="red", outline=True, outline_color="black")
+    drawing.line(trans(self.a1[0]),trans(self.a1[1]),trans(self.b1[0]),trans(self.b1[1]),color = "black", width = 2)
+    drawing.line(trans(self.a2[0]),trans(self.a2[1]),trans(self.b2[0]),trans(self.b2[1]),color = "black", width = 2)
 
 
 def init(): # bruv
@@ -171,7 +193,10 @@ def init(): # bruv
   enemyUnits = []
   playerUnits.append(Player('Infantry', 1000, 10, 10, 0,100,25))
   enemyUnits.append(Enemy('Infantry', 1000, 0, 0, 0,100,15))
-  playerUnits[0].rotateCW(math.pi/2)
+
+  playerUnits[0].rotate(math.pi/2)
+  
+  
   enemyUnits[0].rotateACW(math.pi/6)
   # units[0].movement = [[30,20],[50,20]]
   # units[1].movement = [[20,10],[40,11]]
@@ -242,6 +267,8 @@ def main():
   #while time.perf_counter()-timing2 < 0.1 :
   update(playerUnits,enemyUnits)
   render(playerUnits,enemyUnits)
+  drawing.oval(50,50,60,60)
+  drawing.oval(100,100,110,110)
   #if time.perf_counter() - timing < 1:
     #time.sleep(0.5)
 
@@ -265,8 +292,8 @@ def compareTimer(event_data):
   else:
     if Player.isSelected is not None:
       drawing.oval(event_data.x-2,event_data.y-2,event_data.x+2,event_data.y+2,color = "green",outline=False)
-      print(trans(first[0]))
       drawing.oval(trans(first[0])-2,trans(first[1])-2,trans(first[0])+2,trans(first[1])+2,color = "green",outline=False)
+      playerUnits[Player.isSelected].phase = 0
       playerUnits[Player.isSelected].movement = (first,[invTrans(event_data.x),invTrans(event_data.y)])
 
 drawing.when_left_button_pressed = startTimer
@@ -278,5 +305,6 @@ drawing.when_left_button_released = compareTimer
 # more temporary drawing stuff ===================
 # I wish shaun could hurry up and get a move on so I don't have to use this bullshit
 drawing.repeat(500, main) 
+
 app.display()
 # more temporary drawing stuff ===================
